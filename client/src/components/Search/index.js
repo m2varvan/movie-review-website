@@ -1,18 +1,19 @@
 import * as React from 'react';
-import { Typography, Box, TextField, Button } from '@mui/material';
+import { Typography, Box, TextField, Button, Paper } from '@mui/material';
 
 const Search = () => {
 
   // States for values entered in the text field
-  const [movieTitleSearch, setmovieTitleSearch] = React.useState('')
+  const [movieTitleSearch, setMovieTitleSearch] = React.useState('')
   const [actorSearch, setActorSearch] = React.useState('')
   const [directorName, setDirectorName] = React.useState('')
 
+  // States for api
   const [results, setResults] = React.useState([]);
-  const [error, setError] = React.useState('');
+  const [loading, setLoading] = React.useState(false)
 
   const handleChange1 = (event) => {
-    setmovieTitleSearch(event.target.value)
+    setMovieTitleSearch(event.target.value)
   };
 
   const handleChange2 = (event) => {
@@ -24,6 +25,7 @@ const Search = () => {
   };
 
   const handleSearch = async () => {
+    setLoading(true);
     try {
       const queryParams = new URLSearchParams();
       if (movieTitleSearch) queryParams.append('title', movieTitleSearch);
@@ -31,15 +33,17 @@ const Search = () => {
       if (directorName) queryParams.append('director', directorName);
 
       const response = await fetch(`/api/search?${queryParams.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
       const data = await response.json();
-
-      if (!response.ok) throw new Error(data.message || 'Error fetching results');
-
       setResults(data);
-      setError('');
-    } catch (err) {
-      setError(err.message || 'Something went wrong');
-      setResults([]);
+    } catch (error) {
+      console.error("Error fetching results:", error);
+    } finally {
+      setLoading(false); 
     }
   };
 
@@ -109,9 +113,63 @@ const Search = () => {
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
           <Button id="search-button" variant="contained" onClick={handleSearch}>Submit</Button>
         </Box>
-      
-      </Box> 
+        {loading && <Typography>Loading...</Typography>}
 
+        {results.length > 0 && (
+          <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            mt={4}
+          >
+            <Typography variant="h5" gutterBottom>
+              Search Results
+            </Typography>
+
+            {results.map((movie, index) => (
+              <Paper
+                key={index}
+                elevation={3}
+                sx={{
+                  width: "90%",
+                  maxWidth: "600px",
+                  mb: 3,
+                  p: 2,
+                  backgroundColor: "#f9f9f9",
+                }}
+              >
+                <Typography variant="h6" gutterBottom>
+                  Movie Title: {movie.movieTitle}
+                </Typography>
+                <Typography variant="subtitle1">
+                  Movie Director: {movie.director.join(", ")}
+                </Typography>
+                <Typography variant="subtitle1">
+                  Average Rating: {movie.averageRating}
+                </Typography>
+                <Typography variant="subtitle1" gutterBottom>
+                  Reviews:
+                </Typography>
+                <ul style={{ paddingLeft: "20px", marginTop: 0 }}>
+                  {movie.reviews.length > 0 ? (
+                    movie.reviews.map((review, idx) => (
+                      <li key={idx}>
+                        <Typography variant="body2">"{review}"</Typography>
+                      </li>
+                    ))
+                  ) : (
+                    <li>
+                      <Typography variant="body2">No reviews</Typography>
+                    </li>
+                  )}
+                </ul>
+              </Paper>
+            ))}
+          </Box>
+        )}
+
+      </Box>
+      
     </div>
   );
 }
