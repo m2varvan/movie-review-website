@@ -4,6 +4,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import bodyParser from 'body-parser';
+import { error } from 'console';
 // import { restart } from 'nodemon';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -134,15 +135,15 @@ app.get('/api/search', (req, res) => {
 
   sql += ` GROUP BY m.id, m.name`;
 
-  connection.connect(err => {
-    if (err) {
-      console.error('Connection error:', err);
+  connection.connect(error => {
+    if (error) {
+      console.error('Connection error:', error);
       return res.status(500).json({ error: 'Database connection failed' });
     }
 
-    connection.query(sql, params, (err, rows) => {
-      if (err) {
-        console.error('Query error:', err);
+    connection.query(sql, params, (error, rows) => {
+      if (error) {
+        console.error('Query error:', error);
         return res.status(500).json({ error: 'Database query failed' });
       }
 
@@ -164,6 +165,65 @@ app.get('/api/search', (req, res) => {
     });
   });
 });
+
+app.post('/api/watchlist/add', (req, res) => {
+  const { userID, movieID } = req.body;
+
+  const connection = mysql.createConnection(config);
+
+
+  const sql = `INSERT INTO Watchlist (userID, movieID) VALUES (?, ?)`;
+
+  const values = [userID, movieID]
+  connection.query(sql, values, (error, result) => {
+    if (error) {
+      console.error('Database error:', error.message);
+      return res.status(500).json({ error: 'Failed to add a movie to the watchlist' });
+    }
+
+    res.status(201).json({ message: 'Movie added successfully' });
+  });
+
+  connection.end();
+});
+
+app.post('/api/watchlist/remove', (req, res) => {
+  const { userID, movieID } = req.body;
+
+  const connection = mysql.createConnection(config);
+
+
+  const sql = `DELETE FROM Watchlist WHERE userID = ? AND movieID = ?`;
+
+  const values = [userID, movieID]
+  connection.query(sql, values, (error, result) => {
+    if (error) {
+      console.error('Database error:', error.message);
+      return res.status(500).json({ error: 'Failed to remove a movie to the watchlist' });
+    }
+
+    res.status(201).json({ message: 'Movie removed successfully' });
+  });
+
+  connection.end();
+});
+
+app.get('/api/watchlist/:userID', (req, res) => {
+  const userID = req.params.userID;
   
+  const connection = mysql.createConnection(config);
+
+  const sql = `
+    SELECT m.id AS movieID, m.name AS movieTitle
+    FROM Watchlist w
+    JOIN movies m ON w.movieID = m.id
+    WHERE w.userID = ?
+  `;
+
+  connection.query(sql, [userID], (error, results) => {
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(results);
+  });
+});
 
 app.listen(port, () => console.log(`Listening on port ${port}`)); //for the dev version
