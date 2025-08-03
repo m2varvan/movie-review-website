@@ -138,6 +138,10 @@ git push origin d3
 
 12.	In your GitHub repo, create new pull request and merge `d3` branch with the `main` branch. Do not delete `d3` branch.
 
+## Aritificial Intelligence Assistance
+
+Artificial Intelligence, played a role in supporting the development of my movie review website and. AI helped me with debugging both frontend and backend code by identifying syntax issues, clarifying error messages such as ECONNREFUSED and SQL connection problems, and guiding me through React component structure and logic. It helped me design my API endpoints for fetching movies, handling user input, and dynamically updating the watchlist for the MyPage componenet. Additionally, AI helped improve the user interface by suggesting layout improvements with Material UI and styling techniques to make the website look appealing and have a consistent theme.
+
 
 
 
